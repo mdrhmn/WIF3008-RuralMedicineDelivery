@@ -1,0 +1,1 @@
+pip3 install Pillow numpy tk opencv-python cmake pygame tello-python matplotlib
