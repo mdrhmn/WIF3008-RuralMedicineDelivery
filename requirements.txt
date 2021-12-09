@@ -1,4 +1,5 @@
 astor==0.8.1
+autopep8==1.6.0
 Babel==2.9.1
 backports.entry-points-selectable==1.1.1
 bce-python-sdk==0.8.64
@@ -74,6 +75,7 @@ tk==0.1.0
 toml==0.10.2
 tomli==1.2.2
 tqdm==4.27.0
+ttkbootstrap @ git+https://github.com/israel-dryer/ttkbootstrap@93fc09b5dbfad2d93be9ffa9dfbad16a8c482b33
 typing_extensions==4.0.1
 urllib3==1.25.11
 virtualenv==20.10.0
