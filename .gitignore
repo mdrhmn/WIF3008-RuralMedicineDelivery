@@ -6,3 +6,5 @@ __pycache__
 venv/
 .env
 .pyc
+
+tello_control_ui.pyc
