@@ -5,14 +5,15 @@ import tello
 
 def main():
     # Running the system:
-    # 1) Without simulator
-	# open main.py and user port = 8889
-	# run main.py
 	
+    # 1) Without simulator
+    # open main.py and user port = 8889
+    # run main.py
+
     # 2) With simulator (you can see the simulator receiving the instruction)
-	# run TelloSimulator.py in cmd using python TelloSimulator.py
-	# run main.py with port = 9000
-    
+    # run TelloSimulator.py in cmd using python TelloSimulator.py
+    # run main.py with port = 9000
+
     # port = 9000
     port = 8889
 

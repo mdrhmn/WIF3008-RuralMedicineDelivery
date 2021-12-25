@@ -30,8 +30,10 @@ class Tello:
         self.frame = None  # numpy array BGR -- current camera output frame
         self.is_freeze = False  # freeze current camera output
         self.last_frame = None
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # socket for sending cmd
-        self.socket_video = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # socket for receiving video stream
+        self.socket = socket.socket(
+            socket.AF_INET, socket.SOCK_DGRAM)  # socket for sending cmd
+        # socket for receiving video stream
+        self.socket_video = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.tello_address = (tello_ip, tello_port)
         self.local_video_port = 11111  # port for receiving video stream
         self.last_height = 0
@@ -53,7 +55,8 @@ class Tello:
         self.socket_video.bind((local_ip, self.local_video_port))
 
         # thread for receiving video
-        self.receive_video_thread = threading.Thread(target=self._receive_video_thread)
+        self.receive_video_thread = threading.Thread(
+            target=self._receive_video_thread)
         self.receive_video_thread.daemon = True
 
         self.receive_video_thread.start()
@@ -122,7 +125,8 @@ class Tello:
             if frame is not None:
                 # print 'frame size %i bytes, w %i, h %i, linesize %i' % (len(frame), w, h, ls)
 
-                frame = np.fromstring(frame, dtype=np.ubyte, count=len(frame), sep='')
+                frame = np.fromstring(
+                    frame, dtype=np.ubyte, count=len(frame), sep='')
                 frame = (frame.reshape((h, ls / 3, 3)))
                 frame = frame[:, :w, :]
                 res_frame_list.append(frame)
@@ -157,9 +161,9 @@ class Tello:
         self.delay = delay
         for i in range(self.delay):
             time.sleep(1)
-    
+
         return response
-    
+
     def interrupt_delay(self):
         self.delay = 0
 
