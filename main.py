@@ -22,7 +22,7 @@ def main():
     vplayer = TelloUI(drone, route, "./img/")
 
     # Start the Tkinter mainloop
-    vplayer.root.mainloop()
+    # vplayer.root.mainloop()
 
 
 if __name__ == "__main__":
