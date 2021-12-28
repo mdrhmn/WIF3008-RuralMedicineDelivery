@@ -338,10 +338,14 @@ class Tello:
 
         distance = float(distance)
 
+        # if self.imperial is True:
+        #     distance = int(round(distance * 30.48))
+        # else:
+        #     distance = int(round(distance * 1))
         if self.imperial is True:
-            distance = int(round(distance * 30.48))
+            distance = round(distance * 30.48)
         else:
-            distance = int(round(distance * 1))
+            distance = distance * 1
 
         return self.send_command('%s %s' % (direction, distance), delay)
 
