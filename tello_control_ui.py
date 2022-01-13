@@ -1,13 +1,11 @@
-import ttkbootstrap
-from PIL import Image, ImageTk
-# Temporarily disable import
+from gestures.gesture_recognition import GestureRecognition, GestureBuffer
+from utils import CvFpsCalc
 import ttkbootstrap as ttk
 import tkinter as tki
 from tkinter import *
+import configargparse
 import threading
 import datetime
-import platform
-import time
 import cv2
 import os
 
@@ -50,6 +48,8 @@ class TelloUI:
 		# Control variables
 		self.distance = 20  # default distance for 'move' cmd
 		self.degree = 0  # default degree for 'cw' or 'ccw' cmd
+		self.current_gesture_id = None
+		self.isLand = True
 
 		# If flag is TRUE, the auto-takeoff thread will stop waiting for the response from tello
 		self.quit_waiting_flag = False
@@ -97,15 +97,15 @@ class TelloUI:
 
 		# -------------------------- Automatic Flight Frame -------------------------- #
 
-		self.btn_snapshot = ttk.Button(video_frame, text="Take Snapshot", bootstyle='primary',
-									   command=self.take_snapshot)
-		self.btn_snapshot.pack(side="bottom", fill="both",
-							   expand="yes", padx=10, pady=5)
+		# self.btn_snapshot = ttk.Button(video_frame, text="Take Snapshot", bootstyle='primary',
+		# 							   command=self.take_snapshot)
+		# self.btn_snapshot.pack(side="bottom", fill="both",
+		# 					   expand="yes", padx=10, pady=5)
 
-		self.btn_pause = ttk.Button(
-			video_frame, bootstyle='warning', text="Pause", command=self.pause_video)
-		self.btn_pause.pack(side="bottom", fill="both",
-							expand="yes", padx=10, pady=5)
+		# self.btn_pause = ttk.Button(
+		# 	video_frame, bootstyle='warning', text="Pause", command=self.pause_video)
+		# self.btn_pause.pack(side="bottom", fill="both",
+		# 					expand="yes", padx=10, pady=5)
 
 		plan_frame_1 = LabelFrame(red_zone_2, text="Automatic Flight")
 		plan_frame_1.pack(fill="both", expand="yes", side="right")
@@ -152,7 +152,7 @@ class TelloUI:
 		self.btn_distance.pack(side="bottom", fill="both",
 							   expand="yes", padx=10, pady=5)
 
-		self.distance_bar = ttkbootstrap.Meter(col1,
+		self.distance_bar = ttk.Meter(col1,
 											   bootstyle="info",
 											   amounttotal=500,
 											   amountused=self.distance,
@@ -198,7 +198,7 @@ class TelloUI:
 		col3 = LabelFrame(blue_zone, text="Set Rotation Degree")
 		col3.pack(fill="both", expand="yes", side="right")
 
-		self.degree_bar = ttkbootstrap.Meter(col3,
+		self.degree_bar = ttk.Meter(col3,
 											 bootstyle="info",
 											 amountused=self.degree,
 											 subtext='Degree',
@@ -270,38 +270,20 @@ class TelloUI:
 		first_btn_set.pack(fill="both", expand="yes",
 						   side="left", padx=50)
 
-		# Arrows Icon
-		# upIcon = tki.PhotoImage(file=r"./icons/up-arrow.png")
-		# downIcon = tki.PhotoImage(file=r"./icons/down-arrow.png")
-		# leftIcon = tki.PhotoImage(file=r"./icons/left-arrow.png")
-		# rightIcon = tki.PhotoImage(file=r"./icons/right-arrow.png")
-
 		self.btn_moveleft = ttk.Button(
 			first_btn_set, text="Move Left", bootstyle='secondary', command=self.tello_move_left)
-			# first_btn_set, text="Move Left", bootstyle='secondary', command=self.tello.move_left(self.distance,0))
-			# first_btn_set, text='Move Left', bootstyle='secondary',
-			# command=lambda: [threading.Thread(target=tello.send_command, args=(f'left {d}',dl)).start(), self.append_console('Move Left')])
 		self.btn_moveleft.pack(side="left")
 
 		self.btn_moveright = ttk.Button(
 			first_btn_set, text="Move Right", bootstyle='secondary', command=self.tello_move_right)
-			# first_btn_set, text="Move Right", bootstyle='secondary', command=self.tello.move_right(self.distance,0))
-			# first_btn_set, text='Move Right', bootstyle='secondary',
-			# command=lambda: [threading.Thread(target=tello.send_command, args=(f'right {d}',dl)).start(), self.append_console('Move Right')])
 		self.btn_moveright.pack(side="right")
 
 		self.btn_moveforward = ttk.Button(
 			first_btn_set, text="Move Forward", bootstyle='secondary', command=self.tello_move_forward)
-			# first_btn_set, text="Move Forward", bootstyle='secondary', command=self.tello.move_forward(self.distance,0))
-			# first_btn_set, text='Move Forward', bootstyle='secondary',
-			# command=lambda: [threading.Thread(target=tello.send_command, args=(f'forward {d}',dl)).start(), self.append_console('Move Forward')])
 		self.btn_moveforward.pack(side="top", pady=10)
 
 		self.btn_movebackward = ttk.Button(
 			first_btn_set, text="Move Backward", bootstyle='secondary', command=self.tello_move_backward)
-			# first_btn_set, text="Move Backward", bootstyle='secondary', command=self.tello.move_backward(self.distance,0))
-			# first_btn_set, text='Move Backward', bootstyle='secondary',
-			# command=lambda: [threading.Thread(target=tello.send_command, args=(f'back {d}',dl)).start(), self.append_console('Move Backward')])
 		self.btn_movebackward.pack(side="bottom", pady=10)
 
 		# -------------------------- Rotation, Up/Down Frame ------------------------- #
@@ -312,30 +294,18 @@ class TelloUI:
 
 		self.btn_rotatecw = ttk.Button(
 			second_btn_set, text="Rotate CW", bootstyle='secondary', command=self.tello_rotate_cw)
-			# second_btn_set, text="Rotate CW", bootstyle='secondary', command=self.tello.rotate_cw(self.degree,0))
-			# second_btn_set, text='Rotate CW', bootstyle='secondary',
-			# command=lambda: [threading.Thread(target=tello.send_command, args=(f'cw {a}',dl)).start(), self.append_console('Rotate CW')])
 		self.btn_rotatecw.pack(side="left")
 
 		self.btn_rotateccw = ttk.Button(
 			second_btn_set, text="Rotate CCW", bootstyle='secondary', command=self.tello_rotate_ccw)
-			# second_btn_set, text="Rotate CCW", bootstyle='secondary', command=self.tello.rotate_ccw(self.degree,0))
-			# second_btn_set, text='Rotate CCW', bootstyle='secondary',
-			# command=lambda: [threading.Thread(target=tello.send_command, args=(f'ccw {a}',dl)).start(), self.append_console('Rotate CCW')])
 		self.btn_rotateccw.pack(side="right")
 
 		self.btn_moveup = ttk.Button(
 			second_btn_set, text="Move Up", bootstyle='secondary', command=self.tello_move_up)
-			# second_btn_set, text="Move Up", bootstyle='secondary', command=self.tello.move_up(20,0))
-			# second_btn_set, text='Move Up', bootstyle='secondary',
-			# command=lambda: [threading.Thread(target=tello.send_command, args=(f'up {a}',dl)).start(), self.append_console('Move Up')])
 		self.btn_moveup.pack(side="top", pady=10)
 
 		self.btn_movedown = ttk.Button(
 			second_btn_set, text="Move Down", bootstyle='secondary', command=self.tello_move_down)
-			# second_btn_set, text="Move Down", bootstyle='secondary', command=self.tello.move_down(20,0))
-			# second_btn_set, text='Move Down', bootstyle='secondary',
-			# command=lambda: [threading.Thread(target=tello.send_command, args=(f'down {a}',dl)).start(), self.append_console('Move Down')])
 		self.btn_movedown.pack(side="bottom", pady=10)
 
 		# -------------------------------- Flip Frame -------------------------------- #
@@ -369,83 +339,145 @@ class TelloUI:
 		# Start a thread that constantly pools the video sensor for
 		# the most recently read frame
 		self.stopEvent = threading.Event()
-		self.thread = threading.Thread(target=self.videoLoop, args=())
+		self.thread = threading.Thread(target=self.webcam_feed, args=())
+		self.thread.setDaemon(True)
 		self.thread.start()
 
 		# Set a callback to handle when the window is closed
 		self.root.wm_title("Tello Drone Controller")
 		self.root.wm_protocol("WM_DELETE_WINDOW", self.on_close)
-
-		# Sending_command will send command to tello every 5 seconds
-		self.sending_command_thread = threading.Thread(
-			target=self._sendingCommand)
 		self.loop = True
 
 		while self.loop:
 			self.root.update()
 
-	def videoLoop(self):
-		"""
-		The mainloop thread of Tkinter
-		Raises:
-		RuntimeError: To get around a RunTime error that Tkinter throws due to threading.
-		"""
-		try:
-			# Start the thread that get GUI image and drwa skeleton
-			time.sleep(0.5)
-			self.sending_command_thread.start()
+	def webcam_feed(self):
 
-			while not self.stopEvent.is_set():
-				system = platform.system()
+		print('## Reading configuration ##')
+		parser = configargparse.ArgParser(default_config_files=['config.txt'])
 
-				# Read the frame for GUI show
-				self.frame = self.tello.read()
-				if self.frame is None or self.frame.size == 0:
-					continue
+		parser.add('-c', '--my-config', required=False, is_config_file=True, help='config file path')
+		parser.add("--device", type=int)
+		parser.add("--width", help='cap width', type=int)
+		parser.add("--height", help='cap height', type=int)
+		parser.add("--is_keyboard", help='To use Keyboard control by default', type=bool)
+		parser.add('--use_static_image_mode', action='store_true', help='True if running on photos')
+		parser.add("--min_detection_confidence",
+				   help='min_detection_confidence',
+				   type=float)
+		parser.add("--min_tracking_confidence",
+				   help='min_tracking_confidence',
+				   type=float)
+		parser.add("--buffer_len",
+				   help='Length of gesture buffer',
+				   type=int)
 
-				# Transfer the format from frame to image
-				image = Image.fromarray(self.frame)
+		args = parser.parse_args()
 
-				# We found compatibility problem between Tkinter,PIL and MacoOS, and it will
-				# sometimes result to a very long preriod of the "ImageTk.PhotoImage" function,
-				# so for MacOS,we start a new thread to execute the _updateGUIImage function.
-				if system == "Windows" or system == "Linux":
-					self._updateGUIImage(image)
+		gesture_detector = GestureRecognition(args.use_static_image_mode, args.min_detection_confidence,
+											  args.min_tracking_confidence)
+		gesture_buffer = GestureBuffer(buffer_len=args.buffer_len)
+		cv_fps_calc = CvFpsCalc(buffer_len=10)
 
-				else:
-					thread_tmp = threading.Thread(
-						target=self._updateGUIImage, args=(image,))
-					thread_tmp.start()
-					time.sleep(0.03)
+		mode = 0
+		number = -1
 
-		except RuntimeError as e:
-			print("[INFO] Caught a RuntimeError")
+		cap = cv2.VideoCapture(0)
 
-	def _updateGUIImage(self, image):
-		"""
-		Main operation to initial the object of image,and update the GUI panel
-		"""
+		while (True):
+			# Capture the video frame by frame
+			ret, frame = cap.read()
+			fps = cv_fps_calc.get()
+			image = frame
 
-		image = ImageTk.PhotoImage(image)
+			debug_image, gesture_id = gesture_detector.recognize(image, number, mode)
+			gesture_buffer.add_gesture(gesture_id)
+			
+			self.gesture_control(gesture_buffer)
 
-		# If the panel is None, we need to initialise it
-		if self.panel is None:
-			self.panel = tki.Label(image=image)
-			self.panel.image = image
-			self.panel.pack(side="left", padx=10, pady=10)
-		# otherwise, simply update the panel
-		else:
-			self.panel.configure(image=image)
-			self.panel.image = image
+			debug_image = gesture_detector.draw_info(debug_image, fps, mode, number)
+			cv2.imshow('Tello Gesture Recognition', debug_image)
 
-	def _sendingCommand(self):
-		"""
-		Start a while loop that sends 'command' to tello every 5 second
-		"""
+			key = cv2.waitKey(1) & 0xff
+			if key == 27:  # ESC
+				break
 
-		# while True:
-		#     self.tello.send_command('command',0)
-		#     time.sleep(5)
+		# After the loop release the cap object
+		cap.release()
+
+		# Destroy all the windows
+		cv2.destroyAllWindows()
+
+	def gesture_control(self, gesture_buffer):
+		gesture_id = gesture_buffer.get_gesture()
+
+		if not self.isLand and gesture_id != None:
+			
+			if gesture_id == 0:  # FORWARD
+				self.tello.move_forward(25, 0)
+
+				if self.current_gesture_id != gesture_id:
+					print("[GESTURE] Moving Forward")
+
+			elif gesture_id == 1:  # STOP
+				self.tello.move_forward(0, 0)
+				self.tello.move_backward(0, 0)
+				self.tello.move_up(0, 0)
+				self.tello.move_down(0, 0)
+				self.tello.move_left(0, 0)
+				self.tello.move_right(0, 0)
+
+				if self.current_gesture_id != gesture_id:
+					print("[GESTURE] Stop")
+
+			if gesture_id == 5:  # BACKWARD
+				self.tello.move_backward(25, 0)
+
+				if self.current_gesture_id != gesture_id:
+					print("[GESTURE] Moving Backward")
+
+			elif gesture_id == 2:  # UP
+				self.tello.move_up(25, 0)
+
+				if self.current_gesture_id != gesture_id:
+					print("[GESTURE] Moving Upward")
+
+			elif gesture_id == 4:  # DOWN
+				self.tello.move_down(25, 0)
+
+				if self.current_gesture_id != gesture_id:
+					print("[GESTURE] Moving Downward")
+
+			elif gesture_id == 3:  # LAND
+				self.tello.land()
+
+				if self.current_gesture_id != gesture_id:
+					print("[GESTURE] Landing")
+
+			elif gesture_id == 6:  # LEFT
+				self.tello.move_left(25, 0)
+
+				if self.current_gesture_id != gesture_id:
+					print("[GESTURE] Moving Left")
+
+			elif gesture_id == 7:  # RIGHT
+				self.tello.move_right(25, 0)
+
+				if self.current_gesture_id != gesture_id:
+					print("[GESTURE] Moving Right")
+
+			elif gesture_id == -1: # NO ACTION
+				self.tello.move_forward(0, 0)
+				self.tello.move_backward(0, 0)
+				self.tello.move_up(0, 0)
+				self.tello.move_down(0, 0)
+				self.tello.move_left(0, 0)
+				self.tello.move_right(0, 0)
+
+				if self.current_gesture_id != gesture_id:
+					print("[GESTURE] No Action")
+
+			self.current_gesture_id = gesture_id
 
 	def _sendCommand(self, command):
 		"""
@@ -489,11 +521,12 @@ class TelloUI:
 			self.tello.video_freeze(True)
 			self.append_console("True")
 
-		# ---------------------------------------------------------------------------- #
-		#                          TELLO DRONE FUNCTIONALITIES                         #
-		# ---------------------------------------------------------------------------- #
+	# ---------------------------------------------------------------------------- #
+	#                          TELLO DRONE FUNCTIONALITIES                         #
+	# ---------------------------------------------------------------------------- #
 
 	def tello_take_off(self):
+		self.isLand = False
 		if not self.autoFlightToken:
 			self.append_console("Take off")
 			return self.tello.takeoff()
@@ -591,7 +624,7 @@ class TelloUI:
 		else:
 			self.auto_flight_pause()
 
-		# ------------------------- Keyboard press functions ------------------------- #
+	# ------------------------- Keyboard press functions ------------------------- #
 
 	def update_track_bar(self):
 		self.my_tello_hand.setThr(self.hand_thr_bar.get())
@@ -659,27 +692,27 @@ class TelloUI:
 						  str(value) + " cm. Took around " + str(delay) + " seconds"
 			self.append_console(description)
 			self.tello.move_forward(value, delay)
-			# self.tello.send_command(movement + " " + str(value), delay)
+		# self.tello.send_command(movement + " " + str(value), delay)
 
 		elif movement == "cw":
 			description = "Drone is going to turn clockwise " + \
 						  str(value) + " degree."
 			self.append_console(description)
 			self.tello.rotate_cw(value, delay)
-			# self.tello.send_command(movement + " " + str(value), delay)
+		# self.tello.send_command(movement + " " + str(value), delay)
 
 		elif movement == "ccw":
 			description = "Drone is going to turn counter-clockwise " + \
 						  str(value) + " degree."
 			self.append_console(description)
 			self.tello.rotate_ccw(value, delay)
-			# self.tello.send_command(movement + " " + str(value), delay)
+		# self.tello.send_command(movement + " " + str(value), delay)
 
 		elif movement == "landing":
 			description = "Drone is landing "
 			self.append_console(description)
 			self.tello.land()
-			# self.tello.send_command(movement + " " + str(value), delay)
+		# self.tello.send_command(movement + " " + str(value), delay)
 
 	# Thread for Automatic Flight
 	def flight_thread(self):
@@ -824,3 +857,4 @@ class TelloUI:
 		self.root.destroy()
 
 		print("[INFO] Program terminated")
+
