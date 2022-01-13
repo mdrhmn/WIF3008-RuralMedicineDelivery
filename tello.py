@@ -8,7 +8,7 @@ import numpy as np
 class Tello:
 	"""Wrapper class to interact with the Tello drone."""
 
-	def __init__(self, local_ip, local_port, imperial=False, command_timeout=.3, tello_ip='192.168.10.1',
+	def __init__(self, local_ip, local_port, imperial=False, command_timeout=.3, tello_ip='192.168.0.143', # Drone: 192.168.10.1
 				 tello_port=8889):
 		"""
 		Binds to the local IP/port and puts the Tello into command mode.
