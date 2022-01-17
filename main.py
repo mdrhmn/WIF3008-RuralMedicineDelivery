@@ -19,10 +19,10 @@ def main():
 
     drone = tello.Tello('', port)
     route = routes.Route.checkpoint
-    vplayer = TelloUI(drone, route, "./img/")
+    control_panel = TelloUI(drone, route, "./img/")
 
     # Start the Tkinter mainloop
-    # vplayer.root.mainloop()
+    # control_panel.root.mainloop()
 
 
 if __name__ == "__main__":
