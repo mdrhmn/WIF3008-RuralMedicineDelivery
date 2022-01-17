@@ -32,7 +32,6 @@ class TelloUI:
         # The path that save pictures created by clicking the take_snapshot button
         self.outputPath = outputpath
         self.checkpoint = checkpoint
-        print(self.checkpoint)
 
         # Frame read from h264decoder and used for pose recognition
         self.frame = None
@@ -337,9 +336,9 @@ class TelloUI:
         # Start a thread that constantly pools the video sensor for
         # the most recently read frame
         self.stopEvent = threading.Event()
-        # self.thread = threading.Thread(target=self.webcam_feed, args=())
-        # self.thread.setDaemon(True)
-        # self.thread.start()
+        self.thread = threading.Thread(target=self.webcam_feed, args=())
+        self.thread.setDaemon(True)
+        self.thread.start()
 
         # Set a callback to handle when the window is closed
         self.root.wm_title("Tello Drone Controller")
@@ -349,62 +348,62 @@ class TelloUI:
         while self.loop:
             self.root.update()
 
-    # def webcam_feed(self):
+    def webcam_feed(self):
 
-    #     print('## Reading configuration ##')
-    #     parser = configargparse.ArgParser(default_config_files=['config.txt'])
+        print('## Reading configuration ##')
+        parser = configargparse.ArgParser(default_config_files=['config.txt'])
 
-    #     parser.add('-c', '--my-config', required=False, is_config_file=True, help='config file path')
-    #     parser.add("--device", type=int)
-    #     parser.add("--width", help='cap width', type=int)
-    #     parser.add("--height", help='cap height', type=int)
-    #     parser.add("--is_keyboard", help='To use Keyboard control by default', type=bool)
-    #     parser.add('--use_static_image_mode', action='store_true', help='True if running on photos')
-    #     parser.add("--min_detection_confidence",
-    #                help='min_detection_confidence',
-    #                type=float)
-    #     parser.add("--min_tracking_confidence",
-    #                help='min_tracking_confidence',
-    #                type=float)
-    #     parser.add("--buffer_len",
-    #                help='Length of gesture buffer',
-    #                type=int)
+        parser.add('-c', '--my-config', required=False, is_config_file=True, help='config file path')
+        parser.add("--device", type=int)
+        parser.add("--width", help='cap width', type=int)
+        parser.add("--height", help='cap height', type=int)
+        parser.add("--is_keyboard", help='To use Keyboard control by default', type=bool)
+        parser.add('--use_static_image_mode', action='store_true', help='True if running on photos')
+        parser.add("--min_detection_confidence",
+                   help='min_detection_confidence',
+                   type=float)
+        parser.add("--min_tracking_confidence",
+                   help='min_tracking_confidence',
+                   type=float)
+        parser.add("--buffer_len",
+                   help='Length of gesture buffer',
+                   type=int)
 
-    #     args = parser.parse_args()
+        args = parser.parse_args()
 
-    #     gesture_detector = GestureRecognition(args.use_static_image_mode, args.min_detection_confidence,
-    #                                           args.min_tracking_confidence)
-    #     gesture_buffer = GestureBuffer(buffer_len=args.buffer_len)
-    #     cv_fps_calc = CvFpsCalc(buffer_len=10)
+        gesture_detector = GestureRecognition(args.use_static_image_mode, args.min_detection_confidence,
+                                              args.min_tracking_confidence)
+        gesture_buffer = GestureBuffer(buffer_len=args.buffer_len)
+        cv_fps_calc = CvFpsCalc(buffer_len=10)
 
-    #     mode = 0
-    #     number = -1
+        mode = 0
+        number = -1
 
-    #     cap = cv2.VideoCapture(0)
+        cap = cv2.VideoCapture(0)
 
-    #     while (True):
-    #         # Capture the video frame by frame
-    #         ret, frame = cap.read()
-    #         fps = cv_fps_calc.get()
-    #         image = frame
+        while (True):
+            # Capture the video frame by frame
+            ret, frame = cap.read()
+            fps = cv_fps_calc.get()
+            image = frame
 
-    #         debug_image, gesture_id = gesture_detector.recognize(image, number, mode)
-    #         gesture_buffer.add_gesture(gesture_id)
+            debug_image, gesture_id = gesture_detector.recognize(image, number, mode)
+            gesture_buffer.add_gesture(gesture_id)
 
-    #         self.gesture_control(gesture_buffer)
+            self.gesture_control(gesture_buffer)
 
-    #         debug_image = gesture_detector.draw_info(debug_image, fps, mode, number)
-    #         cv2.imshow('Tello Gesture Recognition', debug_image)
+            debug_image = gesture_detector.draw_info(debug_image, fps, mode, number)
+            cv2.imshow('Tello Gesture Recognition', debug_image)
 
-    #         key = cv2.waitKey(1) & 0xff
-    #         if key == 27:  # ESC
-    #             break
+            key = cv2.waitKey(1) & 0xff
+            if key == 27:  # ESC
+                break
 
-    #     # After the loop release the cap object
-    #     cap.release()
+        # After the loop release the cap object
+        cap.release()
 
-    #     # Destroy all the windows
-    #     cv2.destroyAllWindows()
+        # Destroy all the windows
+        cv2.destroyAllWindows()
 
     def gesture_control(self, gesture_buffer):
         gesture_id = gesture_buffer.get_gesture()
