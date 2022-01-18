@@ -1,6 +1,10 @@
 from tello_control_ui import TelloUI
-import routes
 import tello
+
+# from draft_tello_ui import TelloUI
+# import new_tello as tello
+
+import routes
 
 
 def main():
