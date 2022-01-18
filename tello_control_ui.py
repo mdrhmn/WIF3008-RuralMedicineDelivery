@@ -155,13 +155,13 @@ class TelloUI:
                                expand="yes", padx=10, pady=5)
 
         self.distance_bar = ttkbootstrap.Meter(col1,
-                                      bootstyle="info",
-                                      amounttotal=500,
-                                      amountused=self.distance,
-                                      subtext='Distance',
-                                      textright='cm',
-                                      stripethickness=5,
-                                      interactive=False)
+                                               bootstyle="info",
+                                               amounttotal=500,
+                                               amountused=self.distance,
+                                               subtext='Distance',
+                                               textright='cm',
+                                               stripethickness=5,
+                                               interactive=False)
         self.distance_bar.pack(side="top")
 
         self.distance_scale = ttk.Scale(
@@ -196,13 +196,13 @@ class TelloUI:
         col3.pack(fill="both", expand="yes", side="right")
 
         self.degree_bar = ttkbootstrap.Meter(col3,
-                                    bootstyle="info",
-                                    amountused=self.degree,
-                                    subtext='Degree',
-                                    amounttotal=360,
-                                    textright='o',
-                                    stripethickness=10,
-                                    interactive=False)
+                                             bootstyle="info",
+                                             amountused=self.degree,
+                                             subtext='Degree',
+                                             amounttotal=360,
+                                             textright='o',
+                                             stripethickness=10,
+                                             interactive=False)
         self.degree_bar.pack(side="top")
 
         self.degree_scale = ttk.Scale(col3,
@@ -353,12 +353,15 @@ class TelloUI:
         print('## Reading configuration ##')
         parser = configargparse.ArgParser(default_config_files=['config.txt'])
 
-        parser.add('-c', '--my-config', required=False, is_config_file=True, help='config file path')
+        parser.add('-c', '--my-config', required=False,
+                   is_config_file=True, help='config file path')
         parser.add("--device", type=int)
         parser.add("--width", help='cap width', type=int)
         parser.add("--height", help='cap height', type=int)
-        parser.add("--is_keyboard", help='To use Keyboard control by default', type=bool)
-        parser.add('--use_static_image_mode', action='store_true', help='True if running on photos')
+        parser.add("--is_keyboard",
+                   help='To use Keyboard control by default', type=bool)
+        parser.add('--use_static_image_mode', action='store_true',
+                   help='True if running on photos')
         parser.add("--min_detection_confidence",
                    help='min_detection_confidence',
                    type=float)
@@ -387,12 +390,14 @@ class TelloUI:
             fps = cv_fps_calc.get()
             image = frame
 
-            debug_image, gesture_id = gesture_detector.recognize(image, number, mode)
+            debug_image, gesture_id = gesture_detector.recognize(
+                image, number, mode)
             gesture_buffer.add_gesture(gesture_id)
 
             self.gesture_control(gesture_buffer)
 
-            debug_image = gesture_detector.draw_info(debug_image, fps, mode, number)
+            debug_image = gesture_detector.draw_info(
+                debug_image, fps, mode, number)
             cv2.imshow('Tello Gesture Recognition', debug_image)
 
             key = cv2.waitKey(1) & 0xff
@@ -669,7 +674,8 @@ class TelloUI:
         if movement == "forward":
 
             description = "Drone is moving forward for " + \
-                          str(value) + " cm. Took around " + str(delay) + " seconds"
+                          str(value) + " cm. Took around " + \
+                str(delay) + " seconds"
             self.append_console(description)
             self.tello.move_forward(value, delay)
         # self.tello.send_command(movement + " " + str(value), delay)
@@ -703,7 +709,6 @@ class TelloUI:
         print(self.current_checkpoint, ' self.current_checkpoint')
         i = self.current_checkpoint
         print(i, ' i')
-        max_round = 5
         self.isStop = False
 
         self.append_console(
@@ -716,46 +721,43 @@ class TelloUI:
         else:
             self.append_console("Continuing automatic flight")
 
-        # Let drone run the pre-planned route 5 times
-        while self.current_round <= max_round and self.autoFlightToken:
-            print('Round ', self.current_round)
-            self.append_console('Round ' + str(self.current_round))
+    # Thread for Automatic Flight
+    def flight_thread(self):
+        # Pre-planned flight for drone
+        checkpoint = self.checkpoint
+        i = self.current_checkpoint
+        self.isStop = False
 
-            if self.current_round == max_round:
-                self.append_console("Low battery. This is the last round!")
+        self.append_console(
+            "==================================================================================")
+        if i == 0:
+            self.append_console("Switching to Automatic Mode. Starting flight")
+            self.append_console("Take off")
+            self.tello.takeoff()
+            self.isLand = False
+        else:
+            self.append_console("Continuing automatic flight")
 
-            while i < len(checkpoint) and self.autoFlightToken:
-                if (checkpoint[i][0] - 1) < 0:
-                    print('At checkpoint ', str(
-                        checkpoint[len(checkpoint) - 2][0]))
-                    self.append_console(
-                        'At checkpoint ' + str(checkpoint[len(checkpoint) - 2][0]))
-                else:
-                    print(
-                        'At checkpoint ', str(checkpoint[i][0] - 1))
-                    self.append_console(
-                        'At checkpoint ' + str(checkpoint[i][0] - 1))
+        # Let drone run the pre-planned route
+        while i < len(checkpoint) and self.autoFlightToken:
+            print(
+                'At checkpoint ', str(checkpoint[i][0]))
+            self.append_console(
+                'At checkpoint ' + str(checkpoint[i][0]))
 
-                self.run_preplanned_flight(
-                    checkpoint[i][1], checkpoint[i][2], checkpoint[i][3])
-                self.run_preplanned_flight(
-                    checkpoint[i][4], checkpoint[i][5], checkpoint[i][6])
+            self.run_preplanned_flight(
+                checkpoint[i][1], checkpoint[i][2], checkpoint[i][3])
+            self.run_preplanned_flight(
+                checkpoint[i][4], checkpoint[i][5], checkpoint[i][6])
 
-                # print('Reached checkpoint ',  str(checkpoint[i][0]))
-                # self.append_console('Reached checkpoint '+  str(checkpoint[i][0]))
-                self.append_console(
-                    "==================================================================================")
+            print('Reached checkpoint ',  str(checkpoint[i][0]))
+            self.append_console('Reached checkpoint '+  str(checkpoint[i][0]))
+            self.append_console(
+                "==================================================================================")
+
+            if self.autoFlightToken == 1 or self.isPause == True:
                 i += 1
                 self.current_checkpoint += 1
-
-            if not self.isPause:
-                self.current_round += 1
-
-            i = 0
-
-        if self.current_round == max_round and not self.isPause and not self.isStop:
-            self.append_console("Returning to charging port")
-            print("Returning to charging port")
 
         if self.isPause:
             self.append_console("Flight paused. Please move to checkpoint " + str(
@@ -766,15 +768,9 @@ class TelloUI:
             print("Landing")
             self.append_console("Landing")
             self.tello.land()
-            self.append_console("Charging drone")
-            print("Charging drone")
 
         else:
             self.append_console("Flight interrupted. Switching to Manual mode")
-
-        # self.btn_autoFlight.config(relief="raised")
-        if self.current_round == max_round:
-            self.current_round = 1
 
     # Start/Stop thread when button is pressed
     def auto_control_flight(self):
@@ -843,4 +839,3 @@ class TelloUI:
         self.root.destroy()
 
         print("[INFO] Program terminated")
-
